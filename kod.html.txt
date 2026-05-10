@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<title>
+    afootball a hosgeldin
+</title>
+</head>
+<body>
+      <h1>TRfootballun resmi sitesine hosgeldiniz</h1>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br><br>
+    <br><br><br><br><br>
+    <br><br><br><br><br>
+    <br><br><br><br><br>
+    <br><br><br><br><br>
+    <hr>
+      <p>bu marka kendine özgün bir markadı yani sormadadn veya bir sey yapmadan almak haklarına girer bu mara "TRfootball"  2026-2027 yapımı bir markadır</p>
+
+
+
+</body>
+</html>
