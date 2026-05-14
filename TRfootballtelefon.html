@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TR Football Mobile & Web</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    body { 
+      text-align: center; 
+      color: white; 
+      font-family: Arial, sans-serif; 
+      background: #222; 
+      margin: 0; 
+      overflow: hidden; 
+      touch-action: none; 
+    }
+    canvas { 
+      background: #2e7d32; 
+      display: block; 
+      margin: 10px auto; 
+      max-width: 95vw; 
+      max-height: 60vh; 
+      border: 4px solid white;
+      border-radius: 5px;
+    }
+    #menu, #difficulty { margin-top: 50px; }
+    button { 
+      font-size: 20px; 
+      margin: 10px; 
+      padding: 15px 30px; 
+      border-radius: 10px; 
+      border: none; 
+      background: #007bff; 
+      color: white; 
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:active { background: #0056b3; }
+    
+    /* Mobil Kontroller */
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 40px;
+      height: 150px;
+      user-select: none;
+    }
+    .joystick-container {
+      width: 100px;
+      height: 100px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      position: relative;
+      touch-action: none;
+    }
+    .joystick-knob {
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 50%;
+      position: absolute;
+      top: 30px;
+      left: 30px;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<h1 id="gameTitle">TR Football</h1>
+
+<div id="menu">
+  <button onclick="selectMode('1v1')">1 vs 1</button>
+  <button onclick="selectMode('1vAI')">1 vs AI</button>
+</div>
+
+<div id="difficulty" style="display:none;">
+  <h2>Zorluk Seç</h2>
+  <button onclick="startGame('easy')">Kolay</button>
+  <button onclick="startGame('medium')">Orta</button>
+  <button onclick="startGame('hard')">Zor</button>
+</div>
+
+<canvas id="gameCanvas" width="800" height="600" style="display:none;"></canvas>
+
+<div id="mobileControls" class="controls" style="display:none;">
+  <div class="joystick-container" id="leftJoyContainer">
+    <div class="joystick-knob" id="leftJoyKnob"></div>
+  </div>
+  <div class="joystick-container" id="rightJoyContainer" style="visibility: hidden;">
+    <div class="joystick-knob" id="rightJoyKnob"></div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+let mode = null;
+let difficulty = null;
+let scorePlayer1 = 0, scorePlayer2 = 0;
+let matchTime = 90; 
+let lastUpdate = Date.now();
+
+let player1 = { x:100, y:300, size:25, speed:5 };
+let player2 = { x:700, y:300, size:25, speed:5 };
+let ai = { x:700, y:300, size:25, speed:3 };
+let ball = { x:400, y:300, size:12, dx:4, dy:3 };
+
+let keys = {};
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
+
+let joy1 = { dx: 0, dy: 0 };
+let joy2 = { dx: 0, dy: 0 };
+
+function selectMode(selectedMode){
+  mode = selectedMode;
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("difficulty").style.display = "block";
+}
+
+function startGame(selectedDifficulty){
+  difficulty = selectedDifficulty;
+  if(difficulty === "easy") ai.speed = 2.5;
+  else if(difficulty === "medium") ai.speed = 4.5;
+  else if(difficulty === "hard") ai.speed = 6.5;
+
+  document.getElementById("difficulty").style.display = "none";
+  document.getElementById("gameTitle").style.display = "none";
+  canvas.style.display = "block";
+  document.getElementById("mobileControls").style.display = "flex";
+  
+  if(mode === "1v1") document.getElementById("rightJoyContainer").style.visibility = "visible";
+  
+  setupJoystick("leftJoyContainer", "leftJoyKnob", (dx, dy) => { joy1.dx = dx; joy1.dy = dy; });
+  setupJoystick("rightJoyContainer", "rightJoyKnob", (dx, dy) => { joy2.dx = dx; joy2.dy = dy; });
+  
+  lastUpdate = Date.now();
+  gameLoop();
+}
+
+function setupJoystick(containerId, knobId, callback) {
+  const container = document.getElementById(containerId);
+  const knob = document.getElementById(knobId);
+  
+  const handleTouch = (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = container.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    let x = touch.clientX - rect.left - centerX;
+    let y = touch.clientY - rect.top - centerY;
+    
+    const maxDist = 40;
+    const dist = Math.min(Math.hypot(x, y), maxDist);
+    const angle = Math.atan2(y, x);
+    
+    const finalX = Math.cos(angle) * dist;
+    const finalY = Math.sin(angle) * dist;
+    
+    knob.style.transform = `translate(${finalX}px, ${finalY}px)`;
+    callback(finalX / maxDist, finalY / maxDist);
+  };
+
+  container.addEventListener("touchstart", handleTouch);
+  container.addEventListener("touchmove", handleTouch);
+  container.addEventListener("touchend", () => {
+    knob.style.transform = `translate(0px, 0px)`;
+    callback(0, 0);
+  });
+}
+
+function resetBall(){
+  ball.x = 400;
+  ball.y = 300;
+  ball.dx = (Math.random() > 0.5 ? 4 : -4);
+  ball.dy = (Math.random() > 0.5 ? 3 : -3);
+}
+
+function update(){
+  // P1 Hareket & Sınırlandırma
+  if(keys["ArrowLeft"] || joy1.dx < -0.2) player1.x -= player1.speed;
+  if(keys["ArrowRight"] || joy1.dx > 0.2) player1.x += player1.speed;
+  if(keys["ArrowUp"] || joy1.dy < -0.2) player1.y -= player1.speed;
+  if(keys["ArrowDown"] || joy1.dy > 0.2) player1.y += player1.speed;
+
+  player1.x = Math.max(player1.size, Math.min(400 - player1.size, player1.x));
+  player1.y = Math.max(player1.size, Math.min(600 - player1.size, player1.y));
+
+  // P2 / AI Hareket & Sınırlandırma
+  let currentOpp = (mode === "1v1") ? player2 : ai;
+  
+  if(mode === "1v1"){
+    if(keys["a"] || joy2.dx < -0.2) player2.x -= player2.speed;
+    if(keys["d"] || joy2.dx > 0.2) player2.x += player2.speed;
+    if(keys["w"] || joy2.dy < -0.2) player2.y -= player2.speed;
+    if(keys["s"] || joy2.dy > 0.2) player2.y += player2.speed;
+  } else {
+    if(ai.y < ball.y - 10) ai.y += ai.speed;
+    else if(ai.y > ball.y + 10) ai.y -= ai.speed;
+  }
+
+  currentOpp.x = Math.max(400 + currentOpp.size, Math.min(800 - currentOpp.size, currentOpp.x));
+  currentOpp.y = Math.max(currentOpp.size, Math.min(600 - currentOpp.size, currentOpp.y));
+
+  // Top Hareketi
+  ball.x += ball.dx;
+  ball.y += ball.dy;
+
+  // Duvar Sekmeleri
+  if(ball.y < ball.size || ball.y > 600 - ball.size) ball.dy *= -1;
+  if(ball.x < ball.size || ball.x > 800 - ball.size) ball.dx *= -1;
+
+  // Oyuncu-Top Çarpışması
+  if(Math.hypot(ball.x - player1.x, ball.y - player1.y) < player1.size + ball.size) ball.dx = Math.abs(ball.dx) + 0.2;
+  if(Math.hypot(ball.x - currentOpp.x, ball.y - currentOpp.y) < currentOpp.size + ball.size) ball.dx = -Math.abs(ball.dx) - 0.2;
+
+  // Gol Kontrolü
+  if(ball.x < 30 && ball.y > 200 && ball.y < 400) { scorePlayer2++; resetBall(); }
+  if(ball.x > 770 && ball.y > 200 && ball.y < 400) { scorePlayer1++; resetBall(); }
+
+  let now = Date.now();
+  matchTime -= (now - lastUpdate) / 1000;
+  lastUpdate = now;
+}
+
+function draw(){
+  ctx.clearRect(0,0,800,600);
+  
+  // Saha
+  ctx.strokeStyle="white"; ctx.lineWidth=3;
+  ctx.strokeRect(0,0,800,600);
+  ctx.beginPath(); ctx.moveTo(400,0); ctx.lineTo(400,600); ctx.stroke();
+  ctx.beginPath(); ctx.arc(400,300,60,0,Math.PI*2); ctx.stroke();
+  
+  // Kaleler
+  ctx.fillStyle="white";
+  ctx.fillRect(0,200,15,200);
+  ctx.fillRect(785,200,15,200);
+
+  // Karakterler
+  ctx.fillStyle="blue";
+  ctx.beginPath(); ctx.arc(player1.x, player1.y, player1.size, 0, Math.PI*2); ctx.fill();
+  
+  ctx.fillStyle="red";
+  let opp = (mode === "1v1") ? player2 : ai;
+  ctx.beginPath(); ctx.arc(opp.x, opp.y, opp.size, 0, Math.PI*2); ctx.fill();
+
+  // Top
+  ctx.fillStyle="white";
+  ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.size, 0, Math.PI*2); ctx.fill();
+
+  // Arayüz
+  ctx.fillStyle="white"; ctx.font = "bold 24px Arial";
+  ctx.fillText(`P1: ${scorePlayer1}`, 50, 40);
+  ctx.fillText(`RAKİP: ${scorePlayer2}`, 650, 40);
+  ctx.fillText(`SÜRE: ${Math.max(0, Math.ceil(matchTime))}`, 355, 40);
+}
+
+function gameLoop(){
+  if(matchTime <= 0) {
+    alert(`Maç Bitti!\nSkor: ${scorePlayer1} - ${scorePlayer2}`);
+    location.reload();
+    return;
+  }
+  update();
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+</script>
+</body>
+</html>
