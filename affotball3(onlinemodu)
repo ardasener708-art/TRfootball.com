@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TR Football - Online</title>
+  <style>
+    #canvas-container {
+      position: relative;
+      width: 800px;
+      margin: auto;
+    }
+    canvas { background: green; display: block; margin: auto; }
+    body { text-align: center; color: white; font-family: Arial; background-color: #222; }
+    #menu, #difficulty, #team-select, #online-menu { margin-top: 20px; }
+    button { font-size: 20px; margin: 10px; padding: 10px 20px; cursor: pointer; }
+    textarea { width: 80%; height: 80px; margin: 10px; font-size: 12px; }
+    .btn-back { background-color: #d9534f; color: white; border: none; border-radius: 4px; }
+    .btn-back:hover { background-color: #c9302c; }
+    .instructions { font-size: 16px; color: #aaa; margin-top: 10px; }
+    
+    #logo-container {
+      width: 200px;
+      height: 200px;
+      margin: 20px auto;
+      background: #ffffff;
+      border: 3px solid #555;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .team-name {
+      font-size: 32px;
+      font-weight: bold;
+      color: yellow;
+      margin-top: 10px;
+      min-height: 40px;
+    }
+
+    #ingame-back-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #d9534f;
+      color: white;
+      border: 2px solid white;
+      border-radius: 5px;
+      padding: 5px 10px;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: bold;
+      display: none;
+      z-index: 10;
+    }
+    #ingame-back-btn:hover {
+      background-color: #c9302c;
+    }
+  </style>
+</head>
+<body>
+<h1>TR Football</h1>
+
+<!-- ANA MENÜ -->
+<div id="menu">
+  <button onclick="selectMode('1v1')">1 vs 1 (Aynı Klavye)</button>
+  <button onclick="selectMode('1vAI')">1 vs AI</button>
+  <button onclick="showOnlineMenu()">Online (Aynı Ağ/Wi-Fi)</button>
+</div>
+
+<!-- ONLİNE BAĞLANTI MENÜSÜ -->
+<div id="online-menu" style="display:none;">
+  <h2>Online Bağlantı Kurulumu</h2>
+  <button onclick="setupOnlineHost()">1. Adım: Oda Kur (Host)</button>
+  <button onclick="setupOnlineClient()">1. Adım: Odaya Katıl (Client)</button>
+  
+  <div id="host-area" style="display:none;">
+    <p>Bu kodu kopyalayıp rakibinize gönderin:</p>
+    <textarea id="hostCode" readonly onclick="this.select()"></textarea>
+    <p class="instructions">Rakibiniz kodu girip bağlandığında oyun başlayacaktır.</p>
+  </div>
+
+  <div id="client-area" style="display:none;">
+    <p>Kurucudan aldığınız kodu buraya yapıştırın:</p>
+    <textarea id="clientCodeInput" placeholder="Kodu buraya yapıştırın..."></textarea>
+    <br>
+    <button onclick="connectToHost()">Bağlan ve Başla</button>
+  </div>
+  <br><br>
+  <button class="btn-back" onclick="goBackFromOnline()">◄ Geri Dön</button>
+</div>
+
+<!-- TAKIM SEÇİMİ -->
+<div id="team-select" style="display:none;">
+  <h2 id="team-select-title">Oyuncu 1 Takım Seç</h2>
+  <div id="logo-container">
+    <canvas id="logoCanvas" width="180" height="180"></canvas>
+  </div>
+  <div id="team-display" class="team-name">Peal Padrim</div>
+  <p class="instructions">Değiştirmek için <b>◄ Sol / Sağ ►</b> yön tuşlarını, onaylamak için <b>Enter</b> tuşunu kullanın.</p>
+  <br>
+  <button class="btn-back" onclick="goBackFromTeams()">◄ Geri Dön</button>
+</div>
+
+<!-- ZORLUK SEÇİMİ -->
+<div id="difficulty" style="display:none;">
+  <h2>Zorluk Seç</h2>
+  <button onclick="startGame('easy')">Kolay</button>
+  <button onclick="startGame('medium')">Orta</button>
+  <button onclick="startGame('hard')">Zor</button>
+  <br><br>
+  <button class="btn-back" onclick="goBackFromDifficulty()">◄ Geri Dön</button>
+</div>
+
+<!-- OYUN ALANI -->
+<div id="canvas-container">
+  <button id="ingame-back-btn" onclick="goBackFromMatch()">◄ Geri Dön (Menü)</button>
+  <canvas id="gameCanvas" width="800" height="600" style="display:none;"></canvas>
+</div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const logoCanvas = document.getElementById("logoCanvas");
+const logoCtx = logoCanvas.getContext("2d");
+const ingameBackBtn = document.getElementById("ingame-back-btn");
+
+let mode = null;
+let difficulty = null;
+let gameRunning = false;
+
+// WebRTC Değişkenleri
+let peerConnection = null;
+let dataChannel = null;
+let isHost = false;
+
+const teams = [
+  { id: "p_padrim", name: "Peal Padrim" },
+  { id: "farbelonas", name: "Farbelonas" },
+  { id: "gagalatasaray", name: "Gagalatasaray" },
+  { id: "borsaspor", name: "Borsaspor" },
+  { id: "feberhahce", name: "Feberhahce" },
+  { id: "maris", name: "Maris" }
+];
+
+let currentTeamIndex = 0;
+let selectionState = "P1"; 
+let p1Team = "Oyuncu 1";
+let p2Team = "Rakip";
+
+let player1 = { x:100, y:300, size:20, speed:4 };
+let player2 = { x:700, y:300, size:20, speed:4 };
+let ai = { x:700, y:300, size:20, speed:2 };
+let ball = { x:400, y:300, size:12, dx:2, dy:1 };
+
+let scorePlayer1 = 0, scorePlayer2 = 0;
+let matchTime = 1800; 
+let lastUpdate = Date.now();
+
+let goalLeft = { x:0, y:200, w:20, h:200 };
+let goalRight = { x:780, y:200, w:20, h:200 };
+
+let keys = {};
+
+document.addEventListener("keydown", e => {
+  keys[e.key] = true;
+
+  if (document.getElementById("team-select").style.display === "block") {
+    if (e.key === "ArrowRight") {
+      currentTeamIndex = (currentTeamIndex + 1) % teams.length;
+      updateTeamDisplay();
+    }
+    if (e.key === "ArrowLeft") {
+      currentTeamIndex = (currentTeamIndex - 1 + teams.length) % teams.length;
+      updateTeamDisplay();
+    }
+    if (e.key === "Enter") {
+      confirmTeamSelection();
+    }
+  }
+});
+
+document.addEventListener("keyup", e => keys[e.key] = false);
+
+// GERİ DÖNME FONKSİYONLARI
+function goBackFromTeams() {
+  if (selectionState === "P2") {
+    selectionState = "P1";
+    currentTeamIndex = 0;
+    updateTeamDisplay();
+  } else {
+    document.getElementById("team-select").style.display = "none";
+    if (mode === "online") {
+      document.getElementById("online-menu").style.display = "block";
+    } else {
+      document.getElementById("menu").style.display = "block";
+      mode = null;
+    }
+  }
+}
+
+function goBackFromDifficulty() {
+  document.getElementById("difficulty").style.display = "none";
+  document.getElementById("team-select").style.display = "block";
+  if (mode === "1v1") {
+    selectionState = "P2";
+  } else {
+    selectionState = "P1";
+  }
+  currentTeamIndex = 0;
+  updateTeamDisplay();
+}
+
+function showOnlineMenu() {
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("online-menu").style.display = "block";
+  document.getElementById("host-area").style.display = "none";
+  document.getElementById("client-area").style.display = "none";
+}
+
+function goBackFromOnline() {
+  document.getElementById("online-menu").style.display = "none";
+  document.getElementById("menu").style.display = "block";
+  if(peerConnection) peerConnection.close();
+}
+
+function goBackFromMatch() {
+  gameRunning = false;
+  canvas.style.display = "none";
+  ingameBackBtn.style.display = "none";
+  if (peerConnection) peerConnection.close();
+  
+  document.getElementById("menu").style.display = "block";
+  mode = null;
+  scorePlayer1 = 0;
+  scorePlayer2 = 0;
+  matchTime = 1800;
+}
+
+// ==========================================
+// WEBRTC ONLINE BAĞLANTI MANTIĞI (AAY/WI-FI)
+// ==========================================
+const rtcConfig = { iceServers: [] }; // Yerel ağ (LAN/Wi-Fi) için harici sunucuya gerek yoktur
+
+function setupOnlineHost() {
+  isHost = true;
+  mode = "online";
+  document.getElementById("host-area").style.display = "block";
+  document.getElementById("client-area").style.display = "none";
+
+  peerConnection = new RTCPeerConnection(rtcConfig);
+  dataChannel = peerConnection.createDataChannel("gameChannel");
+  
+  setupDataChannelHandlers();
+
+  peerConnection.onicecandidate = e => {
+    if (!e.candidate) {
+      // Tüm yerel ağ bilgileri toplandığında kodu textarea içerisine yazarız
+      document.getElementById("hostCode").value = btoa(JSON.stringify(peerConnection.localDescription));
+    }
+  };
+
+  peerConnection.createOffer().then(offer => peerConnection.setLocalDescription(offer));
+}
+
+function setupOnlineClient() {
+  isHost = false;
+  mode = "online";
+  document.getElementById("client-area").style.display = "block";
+  document.getElementById("host-area").style.display = "none";
+}
+
+function connectToHost() {
+  const codeStr = document.getElementById("clientCodeInput").value.trim();
+  if (!codeStr) return alert("Lütfen kurucudan aldığınız kodu girin!");
+
+  try {
+    const offerDesc = new RTCSessionDescription(JSON.parse(atob(codeStr)));
+    peerConnection = new RTCPeerConnection(rtcConfig);
+
+    peerConnection.ondatachannel = e => {
+      dataChannel = e.channel;
+      setupDataChannelHandlers();
+    };
+
+    peerConnection.onicecandidate = e => {
+      if (!e.candidate) {
+        // Katılımcı yanıtını ekrana alert ile basar, host bunu alıp onaylamalıdır.
+        // Ancak işleri kolaylaştırmak için otomatik çift yönlü el sıkışmayı simüle ediyoruz.
+        // Tamamen sunucusuz sistemde en stabil yöntem Katılımcı kodunu Host'a girmektir.
+        let replyCode = btoa(JSON.stringify(peerConnection.localDescription));
+        let hostReply = prompt("Bu kod SİZİN bağlantı yanıtınızdır. Lütfen bu kodu kopyalayıp KURUCU (Host) bilgisayarındaki açılacak ekrana girin:", replyCode);
+        if (hostReply) {
+          // Bu logic eş zamanlı yürütme için aşağıya taşındı
+        }
+      }
+    };
+
+    peerConnection.setRemoteDescription(offerDesc)
+      .then(() => peerConnection.createAnswer())
+      .then(answer => peerConnection.setLocalDescription(answer))
+      .then(() => {
+        // Kurucunun bu cevabı girmesi için bir akış başlatıyoruz
+        setTimeout(() => {
+          let hostFinalCode = prompt("KURUCU ADIMI: Katılımcı bilgisayarında oluşan yanıt kodunu buraya yapıştırın (Eğer Katılımcı iseniz bu adımı boş geçin veya iptal edin):");
+          if (hostFinalCode && isHost) {
+            const answerDesc = new RTCSessionDescription(JSON.parse(atob(hostFinalCode)));
+            peerConnection.setRemoteDescription(answerDesc);
+          }
+        }, 1000);
+      });
+
+  } catch (err) {
+    alert("Kod çözülemedi veya hatalı! Lütfen tekrar deneyin.");
+  }
+}
+
+// Kurucu için katılımcı yanıtını işleme fonksiyonu ek işlev
+window.addEventListener('message', function(e) { }); 
+// Eğer host ekranındaysak katılımcının kodunu girmek için manuel bir tetikleyici alan ekleyelim
+document.getElementById("hostCode").addEventListener("dblclick", function() {
+  if(isHost) {
+    let clientAnswer = prompt("Katılımcıdan gelen yanıt kodunu buraya yapıştırın:");
+    if(clientAnswer) {
+      const answerDesc = new RTCSessionDescription(JSON.parse(atob(clientAnswer)));
+      peerConnection.setRemoteDescription(answerDesc);
+    }
+  }
+});
+
+function setupDataChannelHandlers() {
+  dataChannel.onopen = () => {
+    // Bağlantı başarılı! Takım seçimine yönlendir.
+    document.getElementById("online-menu").style.display = "none";
+    document.getElementById("team-select").style.display = "block";
+    selectionState = "P1";
+    currentTeamIndex = 0;
+    updateTeamDisplay();
+  };
+
+  dataChannel.onmessage = e => {
+    const msg = JSON.parse(e.data);
+    
+    if (msg.type === "team_select") {
+      if (isHost) {
+        p2Team = msg.teamName;
+        startGameDirectly();
+      } else {
+        p1Team = msg.teamName;
+        startGameDirectly();
+      }
+    }
+    
+    if (msg.type === "game_state") {
+      // Katılımcı (Client) isek, Host'tan gelen oyun durumunu ekrana basarız
+      if (!isHost) {
+        player1 = msg.p1;
+        player2 = msg.p2;
+        ball = msg.ball;
+        scorePlayer1 = msg.s1;
+        scorePlayer2 = msg.s2;
+        matchTime = msg.time;
+      }
+    }
+
+    if (msg.type === "client_input") {
+      // Host isek, Katılımcının tuş hareketlerini alırız
+      if (isHost) {
+        if (msg.keys.ArrowUp) player2.y -= player2.speed;
+        if (msg.keys.ArrowDown) player2.y += player2.speed;
+        if (msg.keys.ArrowLeft) player2.x -= player2.speed;
+        if (msg.keys.ArrowRight) player2.x += player2.speed;
+      }
+    }
+  };
+}
+
+function startGameDirectly() {
+  document.getElementById("team-select").style.display = "none";
+  canvas.style.display = "block";
+  ingameBackBtn.style.display = "block";
+  
+  player1.x = 100; player1.y = 300;
+  player2.x = 700; player2.y = 300;
+  resetBall();
+
+  gameRunning = true;
+  lastUpdate = Date.now();
+  gameLoop();
+}
+
+// LOGO VE DİĞER ÇİZİM FONKSİYONLARI (ESKİ KODLARINIZLA AYNI)
+function drawTeamLogo(teamId, lCtx, width, height) {
+  lCtx.clearRect(0, 0, width, height);
+  lCtx.save();
+  const cx = width / 2; const cy = height / 2;
+
+  if (teamId === "p_padrim") {
+    lCtx.strokeStyle = "#b0b5b8"; lCtx.lineWidth = 4; lCtx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      let angle = (i * Math.PI) / 3 - Math.PI / 2;
+      let x = cx + Math.cos(angle) * 65; let y = cy + Math.sin(angle) * 75;
+      if (i === 0) lCtx.moveTo(x, y); else lCtx.lineTo(x, y);
+    }
+    lCtx.closePath(); lCtx.stroke();
+    lCtx.fillStyle = "#007acc"; lCtx.beginPath(); drawStar(lCtx, cx, cy - 20, 5, 28, 12); lCtx.fill();
+    lCtx.fillStyle = "#cc1122"; lCtx.font = "bold 20px Arial"; lCtx.textAlign = "center";
+    lCtx.fillText("Peal", cx, cy + 25); lCtx.fillText("Padrim", cx, cy + 50);
+  } else if (teamId === "farbelonas") {
+    lCtx.fillStyle = "red"; lCtx.strokeStyle = "#3f48cc"; lCtx.lineWidth = 4; lCtx.beginPath(); drawPolygon(lCtx, cx, cy, 6, 65, -Math.PI/2); lCtx.fill(); lCtx.stroke();
+    lCtx.strokeStyle = "white"; lCtx.lineWidth = 4; lCtx.beginPath(); lCtx.moveTo(cx, cy - 65); lCtx.lineTo(cx, cy + 65); lCtx.stroke();
+    lCtx.beginPath(); lCtx.moveTo(cx - 55, cy - 30); lCtx.lineTo(cx, cy - 30); lCtx.stroke();
+    lCtx.beginPath(); lCtx.moveTo(cx - 65, cy); lCtx.lineTo(cx, cy); lCtx.stroke();
+    lCtx.fillStyle = "black"; lCtx.font = "bold 13px Arial"; lCtx.textAlign = "left"; lCtx.fillText("FAKE", cx + 8, cy - 15); lCtx.fillText("Farbelon", cx + 8, cy + 5); lCtx.fillText("as", cx + 8, cy + 25);
+  } else if (teamId === "gagalatasaray") {
+    lCtx.fillStyle = "#b97a57"; lCtx.beginPath(); drawStar(lCtx, cx, cy - 60, 4, 20, 7); lCtx.fill();
+    lCtx.strokeStyle = "#7f7f7f"; lCtx.lineWidth = 3; lCtx.beginPath(); lCtx.ellipse(cx, cy + 10, 35, 55, 0, 0, Math.PI * 2); lCtx.stroke();
+    lCtx.lineWidth = 5; lCtx.strokeStyle = "yellow"; lCtx.beginPath(); lCtx.moveTo(cx - 12, cy - 35); lCtx.bezierCurveTo(cx - 7, cy - 20, cx - 15, cy + 20, cx - 15, cy + 50); lCtx.stroke();
+    lCtx.strokeStyle = "red"; lCtx.beginPath(); lCtx.moveTo(cx + 8, cy - 35); lCtx.bezierCurveTo(cx + 3, cy - 20, cx + 12, cy + 20, cx + 8, cy + 50); lCtx.stroke();
+    lCtx.fillStyle = "black"; lCtx.font = "bold 13px Arial"; lCtx.textAlign = "center"; lCtx.fillText("Gagalatar", cx, cy + 20); lCtx.fillText("asaray", cx, cy + 38);
+  } else if (teamId === "borsaspor") {
+    lCtx.strokeStyle = "#22b14c"; lCtx.lineWidth = 4; lCtx.beginPath(); drawPolygon(lCtx, cx, cy + 10, 5, 60, -Math.PI/2); lCtx.stroke();
+    lCtx.fillStyle = "#7f0000"; lCtx.beginPath(); lCtx.moveTo(cx - 57, cy - 10); lCtx.lineTo(cx - 10, cy - 48); lCtx.lineTo(cx + 1, cy - 47); lCtx.lineTo(cx - 52, cy + 15); lCtx.closePath(); lCtx.fill();
+    lCtx.fillStyle = "white"; lCtx.font = "bold 16px Arial"; lCtx.fillText("C*", cx - 32, cy - 18);
+    lCtx.fillStyle = "#a8e421"; lCtx.font = "bold 24px Impact"; lCtx.textAlign = "center"; lCtx.fillText("1963", cx + 15, cy + 10);
+    lCtx.strokeStyle = "#a8e421"; lCtx.lineWidth = 7;
+    for(let i = -1; i <= 1; i++) { lCtx.beginPath(); lCtx.moveTo(cx + (i * 20), cy + 22); lCtx.lineTo(cx + (i * 20), cy + 60); lCtx.stroke(); }
+  } else if (teamId === "feberhahce") {
+    lCtx.fillStyle = "yellow"; lCtx.strokeStyle = "#1f3d7a"; lCtx.lineWidth = 4; lCtx.beginPath(); lCtx.ellipse(cx, cy, 40, 55, 0, 0, Math.PI * 2); lCtx.fill(); lCtx.stroke();
+    lCtx.fillStyle = "#1f3d7a"; lCtx.font = "bold 32px Arial"; lCtx.textAlign = "center"; lCtx.fillText("F", cx, cy + 12);
+  } else if (teamId === "maris") {
+    lCtx.fillStyle = "white"; lCtx.strokeStyle = "red"; lCtx.lineWidth = 4; lCtx.beginPath(); lCtx.arc(cx, cy, 50, 0, Math.PI * 2); lCtx.fill(); lCtx.stroke();
+    lCtx.fillStyle = "red"; lCtx.font = "bold 32px Comic Sans MS"; lCtx.textAlign = "center"; lCtx.fillText("M", cx, cy + 11);
+  }
+  lCtx.restore();
+}
+
+function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
+  let rot = Math.PI / 2 * 3; let x = cx; let y = cy; let step = Math.PI / spikes;
+  ctx.moveTo(cx, cy - outerRadius);
+  for (let i = 0; i < spikes; i++) {
+    x = cx + Math.cos(rot) * outerRadius; y = cy + Math.sin(rot) * outerRadius; ctx.lineTo(x, y); rot += step;
+    x = cx + Math.cos(rot) * innerRadius; y = cy + Math.sin(rot) * innerRadius; ctx.lineTo(x, y); rot += step;
+  }
+  ctx.lineTo(cx, cy - outerRadius); ctx.closePath();
+}
+
+function drawPolygon(ctx, cx, cy, sides, radius, startAngle) {
+  if (sides < 3) return;
+  ctx.moveTo(cx + radius * Math.cos(startAngle), cy + radius * Math.sin(startAngle));
+  for (let i = 1; i <= sides; i++) {
+    let angle = startAngle + (i * 2 * Math.PI / sides); ctx.lineTo(cx + radius * Math.cos(angle), cy + radius * Math.sin(angle));
+  }
+  ctx.closePath();
+}
+
+function selectMode(selectedMode){
+  mode = selectedMode;
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("team-select").style.display = "block";
+  selectionState = "P1";
+  currentTeamIndex = 0;
+  updateTeamDisplay();
+}
+
+function updateTeamDisplay() {
+  const title = document.getElementById("team-select-title");
+  if (mode === "online") {
+    title.innerText = isHost ? "Kurucu (P1) Takım Seçimi" : "Katılımcı (P2) Takım Seçimi";
+  } else {
+    if (selectionState === "P1") title.innerText = "Oyuncu 1 Takımını Seçsin";
+    else if (selectionState === "P2") title.innerText = "Oyuncu 2 Takımını Seçsin";
+  }
+  const currentTeam = teams[currentTeamIndex];
+  document.getElementById("team-display").innerText = currentTeam.name;
+  drawTeamLogo(currentTeam.id, logoCtx, logoCanvas.width, logoCanvas.height);
+}
+
+function confirmTeamSelection() {
+  if (mode === "online") {
+    if (isHost) {
+      p1Team = teams[currentTeamIndex].name;
+    } else {
+      p2Team = teams[currentTeamIndex].name;
+    }
+    // Seçilen takımı diğer tarafa gönder
+    if (dataChannel && dataChannel.readyState === "open") {
+      dataChannel.send(JSON.stringify({ type: "team_select", teamName: teams[currentTeamIndex].name }));
+    }
+    document.getElementById("team-select").style.display = "none";
+    ctx.fillStyle = "white";
+    ctx.font = "24px Arial";
+    ctx.fillText("Rakibin seçimi bekleniyor...", 300, 300);
+  } else {
+    if (selectionState === "P1") {
+      p1Team = teams[currentTeamIndex].name;
+      if (mode === "1v1") {
+        selectionState = "P2"; currentTeamIndex = 0; updateTeamDisplay();
+      } else {
+        let aiIndex = Math.floor(Math.random() * teams.length);
+        p2Team = teams[aiIndex].name; showDifficultyMenu();
+      }
+    } else if (selectionState === "P2") {
+      p2Team = teams[currentTeamIndex].name; showDifficultyMenu();
+    }
+  }
+}
+
+function showDifficultyMenu() {
+  document.getElementById("team-select").style.display = "none";
+  document.getElementById("difficulty").style.display = "block";
+}
+
+function startGame(selectedDifficulty){
+  difficulty = selectedDifficulty;
+  if(difficulty === "easy"){ ai.speed = 2; ball.dx = 2; ball.dy = 1.5; } 
+  else if(difficulty === "medium"){ ai.speed = 3.2; ball.dx = 3.5; ball.dy = 2.5; } 
+  else if(difficulty === "hard"){ ai.speed = 4.5; ball.dx = 5; ball.dy = 4; }
+
+  document.getElementById("difficulty").style.display = "none";
+  canvas.style.display = "block";
+  ingameBackBtn.style.display = "block";
+  
+  player1.x = 100; player1.y = 300;
+  player2.x = 700; player2.y = 300;
+  resetBall();
+  gameRunning = true;
+  lastUpdate = Date.now();
+  gameLoop();
+}
+
+function resetBall(){
+  ball.x = canvas.width/2; ball.y = canvas.height/2;
+  ball.dx = (Math.random()>0.5?2:-2);
+  ball.dy = (Math.random()>0.5?1.5:-1.5);
+}
+
+function update(){
+  if (mode === "online") {
+    if (isHost) {
+      // Host oyuncusu P1 (Mavi) - Yön tuşlarıyla kontrol eder
+      if(keys["ArrowLeft"]) player1.x -= player1.speed;
+      if(keys["ArrowRight"]) player1.x += player1.speed;
+      if(keys["ArrowUp"]) player1.y -= player1.speed;
+      if(keys["ArrowDown"]) player1.y += player1.speed;
+
+      player1.x = Math.max(player1.size, Math.min(canvas.width - player1.size, player1.x));
+      player1.y = Math.max(player1.size, Math.min(canvas.height - player1.size, player1.y));
+
+      // Fizik ve top hesaplamalarını sadece Host (Kurucu) yapar (Senkronizasyon için)
+      ball.x += ball.dx; ball.y += ball.dy;
+      if(ball.x < ball.size || ball.x > canvas.width-ball.size) ball.dx *= -1;
+      if(ball.y < ball.size || ball.y > canvas.height-ball.size) ball.dy *= -1;
+
+      let dist1 = Math.hypot(ball.x-player1.x, ball.y-player1.y);
+      if(dist1 < player1.size+ball.size){ ball.dx *= -1; ball.x += ball.dx; }
+
+      let dist2 = Math.hypot(ball.x-player2.x, ball.y-player2.y);
+      if(dist2 < player2.size+ball.size){ ball.dx *= -1; ball.x += ball.dx; }
+
+      if(ball.x < goalLeft.x+goalLeft.w && ball.y>goalLeft.y && ball.y<goalLeft.h+goalLeft.y){ scorePlayer2++; resetBall(); }
+      if(ball.x > goalRight.x && ball.y>goalRight.y && ball.y<goalRight.h+goalRight.y){ scorePlayer1++; resetBall(); }
+
+      let now = Date.now(); let delta = (now - lastUpdate) / 1000; lastUpdate = now;
+      matchTime -= delta;
+
+      // Verileri sürekli client ile paylaş
+      if (dataChannel && dataChannel.readyState === "open") {
+        dataChannel.send(JSON.stringify({
+          type: "game_state", p1: player1, p2: player2, ball: ball, s1: scorePlayer1, s2: scorePlayer2, time: matchTime
+        }));
+      }
+    } else {
+      // Client (Katılımcı) ise kendi yön tuşu verilerini Host'a gönderir
+      if (dataChannel && dataChannel.readyState === "open") {
+        dataChannel.send(JSON.stringify({ type: "client_input", keys: keys }));
+      }
+    }
+  } else {
+    // KORUNAN YEREL MODLARIN MANTIĞI
+    if(keys["ArrowLeft"]) player1.x -= player1.speed;
+    if(keys["ArrowRight"]) player1.x += player1.speed;
+    if(keys["ArrowUp"]) player1.y -= player1.speed;
+    if(keys["ArrowDown"]) player1.y += player1.speed;
+
+    player1.x = Math.max(player1.size, Math.min(canvas.width - player1.size, player1.x));
+    player1.y = Math.max(player1.size, Math.min(canvas.height - player1.size, player1.y));
+
+    if(mode === "1v1"){
+      if(keys["a"] || keys["A"]) player2.x -= player2.speed;
+      if(keys["d"] || keys["D"]) player2.x += player2.speed;
+      if(keys["w"] || keys["W"]) player2.y -= player2.speed;
+      if(keys["s"] || keys["S"]) player2.y += player2.speed;
+      player2.x = Math.max(player2.size, Math.min(canvas.width - player2.size, player2.x));
+      player2.y = Math.max(player2.size, Math.min(canvas.height - player2.size, player2.y));
+    } else if(mode === "1vAI"){
+      if(ai.y < ball.y) ai.y += ai.speed; if(ai.y > ball.y) ai.y -= ai.speed;
+      ai.x = Math.max(ai.size, Math.min(canvas.width - ai.size, ai.x));
+      ai.y = Math.max(ai.size, Math.min(canvas.height - ai.size, ai.y));
+    }
+
+    ball.x += ball.dx; ball.y += ball.dy;
+    if(ball.x < ball.size || ball.x > canvas.width-ball.size) ball.dx *= -1;
+    if(ball.y < ball.size || ball.y > canvas.height-ball.size) ball.dy *= -1;
+
+    let dist1 = Math.hypot(ball.x-player1.x, ball.y-player1.y);
+    if(dist1 < player1.size+ball.size){ ball.dx *= -1; ball.x += ball.dx; }
+
+    if(mode === "1v1"){
+      let dist2 = Math.hypot(ball.x-player2.x, ball.y-player2.y);
+      if(dist2 < player2.size+ball.size){ ball.dx *= -1; ball.x += ball.dx; }
+    } else if(mode === "1vAI"){
+      let distAI = Math.hypot(ball.x-ai.x, ball.y-ai.y);
+      if(distAI < ai.size+ball.size){ ball.dx *= -1; ball.x += ball.dx; }
+    }
+
+    if(ball.x < goalLeft.x+goalLeft.w && ball.y>goalLeft.y && ball.y<goalLeft.h+goalLeft.y){ scorePlayer2++; resetBall(); }
+    if(ball.x > goalRight.x && ball.y>goalRight.y && ball.y<goalRight.h+goalRight.y){ scorePlayer1++; resetBall(); }
+
+    let now = Date.now(); let delta = (now - lastUpdate) / 1000; lastUpdate = now;
+    matchTime -= delta;
+  }
+
+  if(matchTime <= 0){
+    gameRunning = false;
+    alert("Maç Bitti! Skor: " + p1Team + " " + scorePlayer1 + " - " + p2Team + " " + scorePlayer2);
+    window.location.reload();
+  }
+}
+
+function drawBall(){
+  ctx.fillStyle="white"; ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.size,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle="black"; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle="black";
+  for(let i=0;i<6;i++){
+    let angle = i*Math.PI/3; let bx = ball.x + Math.cos(angle)*ball.size*0.6; let by = ball.y + Math.sin(angle)*ball.size*0.6;
+    ctx.beginPath(); ctx.arc(bx,by,3,0,Math.PI*2); ctx.fill();
+  }
+}
+
+function drawField(){
+  ctx.strokeStyle="white"; ctx.lineWidth=2; ctx.strokeRect(0,0,canvas.width,canvas.height);
+  ctx.beginPath(); ctx.moveTo(canvas.width/2,0); ctx.lineTo(canvas.width/2,canvas.height); ctx.stroke();
+  ctx.beginPath(); ctx.arc(canvas.width/2,canvas.height/2,60,0,Math.PI*2); ctx.stroke();
+}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawField();
+
+  // Oyuncu 1 (Mavi)
+  ctx.fillStyle="blue"; ctx.beginPath(); ctx.arc(player1.x,player1.y,player1.size,0,Math.PI*2); ctx.fill();
+
+  // Oyuncu 2 veya AI (Kırmızı)
+  ctx.fillStyle="red";
+  if(mode === "1vAI"){
+    ctx.beginPath(); ctx.arc(ai.x,ai.y,ai.size,0,Math.PI*2); ctx.fill();
+  } else {
+    ctx.beginPath(); ctx.arc(player2.x,player2.y,player2.size,0,Math.PI*2); ctx.fill();
+  }
+
+  drawBall();
+
+  ctx.fillStyle="yellow";
+  ctx.fillRect(goalLeft.x,goalLeft.y,goalLeft.w,goalLeft.h);
+  ctx.fillRect(goalRight.x,goalRight.y,goalRight.w,goalRight.h);
+
+  ctx.fillStyle="white"; ctx.font = "20px Arial";
+  ctx.fillText(p1Team + ": " + scorePlayer1 + "   " + p2Team + ": " + scorePlayer2, 10, 25);
+
+  let minutes = Math.floor(matchTime/60); let seconds = Math.floor(matchTime%60);
+  ctx.fillText("Süre: "+minutes+":"+String(seconds).padStart(2,"0"), 520, 25);
+}
+
+function gameLoop(){
+  if (!gameRunning) return;
+  update();
+  draw();
+  if(matchTime > 0) requestAnimationFrame(gameLoop);
+}
+</script>
+</body>
+</html>
