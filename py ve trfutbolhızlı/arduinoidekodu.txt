@@ -1,0 +1,9 @@
+void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  // 5 saniyede bir Python kodunu tetikleyecek mesaj gönderir
+  Serial.println("TETIKLE");
+  delay(5000);
+}
