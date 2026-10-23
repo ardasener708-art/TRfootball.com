@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Türkçemize yerleşmiş farklı kelimeler</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-bg: #ffffff;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --primary: #5a67d8;
+            --tag-bg: #ebf4ff;
+            --tag-text: #3182ce;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-gradient);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 30px;
+            font-size: 2.2rem;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 15px;
+        }
+
+        .category-title {
+            color: #fff;
+            background: var(--primary);
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-top: 35px;
+            font-size: 1.4rem;
+            box-shadow: 0 4px 10px rgba(90, 103, 216, 0.3);
+        }
+
+        /* Harf gruplarına göre farklı renk dokunuşları */
+        .group-ab .category-title { background: linear-gradient(135deg, #f687b3, #d53f8c); }
+        .group-cf .category-title { background: linear-gradient(135deg, #68d391, #38a169); }
+        .group-gk .category-title { background: linear-gradient(135deg, #4fd1c5, #319795); }
+        .group-lp .category-title { background: linear-gradient(135deg, #63b3ed, #3182ce); }
+        .group-rz .category-title { background: linear-gradient(135deg, #b794f4, #805ad5); }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 18px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-left: 5px solid var(--primary);
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        }
+
+        .word-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .kelime {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #2d3748;
+        }
+
+        .koken {
+            background: var(--tag-bg);
+            color: var(--tag-text);
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .anlam {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>✨ Türkçemize yerlesen kelimeler ama farklı dillerde ✨</h1>
+
+        <!-- A - B GRUBU -->
+        <div class="group-ab">
+            <div class="category-title">A – B Grubu</div>
+            <div class="grid">
+                <div class="card" style="border-left-color: #d53f8c;">
+                    <div class="word-header"><span class="kelime">Abonelik</span><span class="koken">Arapça/Fransızca</span></div>
+                    <div class="anlam">Bir hizmete düzenli üye olma durumu.</div>
+                </div>
+                <div class="card" style="border-left-color: #d53f8c;">
+                    <div class="word-header"><span class="kelime">Ahenk</span><span class="koken">Farsça</span></div>
+                    <div class="anlam">Ses, renk veya unsurlar arasındaki uyum.</div>
+                </div>
+                <div class="card" style="border-left-color: #d53f8c;">
+                    <div class="word-header"><span class="kelime">Atölye</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Sanatçı veya zanaatçıların çalıştığı işlik.</div>
+                </div>
+                <div class="card" style="border-left-color: #d53f8c;">
+                    <div class="word-header"><span class="kelime">Avis</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Görüş, duyuru, bildirim.</div>
+                </div>
+                <div class="card" style="border-left-color: #d53f8c;">
+                    <div class="word-header"><span class="kelime">Bale</span><span class="koken">İtalyanca</span></div>
+                    <div class="anlam">Müzik eşliğinde yapılan dans sanatı.</div>
+                </div>
+                <div class="card" style="border-left-color: #d53f8c;">
+                    <div class="word-header"><span class="kelime">Banka</span><span class="koken">İtalyanca</span></div>
+                    <div class="anlam">Para ve kredi işlemlerinin yürütüldüğü kurum.</div>
+                </div>
+                <div class="card" style="border-left-color: #d53f8c;">
+                    <div class="word-header"><span class="kelime">Bütçe</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Gelir ve gider dengesi, harcama planı.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- C - F GRUBU -->
+        <div class="group-cf">
+            <div class="category-title">C – F Grubu</div>
+            <div class="grid">
+                <div class="card" style="border-left-color: #38a169;">
+                    <div class="word-header"><span class="kelime">Can</span><span class="koken">Farsça</span></div>
+                    <div class="anlam">Ruh, yaşam gücü, sevgili.</div>
+                </div>
+                <div class="card" style="border-left-color: #38a169;">
+                    <div class="word-header"><span class="kelime">Deforme</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Biçimi veya şekli bozulmuş.</div>
+                </div>
+                <div class="card" style="border-left-color: #38a169;">
+                    <div class="word-header"><span class="kelime">Dekor</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Bir sahne veya alanın süslenme biçimi.</div>
+                </div>
+                <div class="card" style="border-left-color: #38a169;">
+                    <div class="word-header"><span class="kelime">Detay</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Ayrıntı, küçük unsur.</div>
+                </div>
+                <div class="card" style="border-left-color: #38a169;">
+                    <div class="word-header"><span class="kelime">Dost</span><span class="koken">Farsça</span></div>
+                    <div class="anlam">Yakın arkadaş, güvenilen kişi.</div>
+                </div>
+                <div class="card" style="border-left-color: #38a169;">
+                    <div class="word-header"><span class="kelime">Dünya</span><span class="koken">Arapça</span></div>
+                    <div class="anlam">Yeryüzü, üzerinde yaşadığımız gezegen.</div>
+                </div>
+                <div class="card" style="border-left-color: #38a169;">
+                    <div class="word-header"><span class="kelime">Empati</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Kendini başkasının yerine koyma yeteneği.</div>
+                </div>
+                <div class="card" style="border-left-color: #38a169;">
+                    <div class="word-header"><span class="kelime">Figür</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Resim veya heykeldeki insan/hayvan biçimi.</div>
+                </div>
+                <div class="card" style="border-left-color: #38a169;">
+                    <div class="word-header"><span class="kelime">Finans</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Para işleri, sermaye yönetimi.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- G - K GRUBU -->
+        <div class="group-gk">
+            <div class="category-title">G – K Grubu</div>
+            <div class="grid">
+                <div class="card" style="border-left-color: #319795;">
+                    <div class="word-header"><span class="kelime">Gazete</span><span class="koken">İtalyanca</span></div>
+                    <div class="anlam">Günlük haber ve bilgi yayın organı.</div>
+                </div>
+                <div class="card" style="border-left-color: #319795;">
+                    <div class="word-header"><span class="kelime">Gönül</span><span class="koken">Farsça</span></div>
+                    <div class="anlam">Kalp, duygu ve sevgi merkezi.</div>
+                </div>
+                <div class="card" style="border-left-color: #319795;">
+                    <div class="word-header"><span class="kelime">Hayat</span><span class="koken">Arapça</span></div>
+                    <div class="anlam">Yaşam, canlılık.</div>
+                </div>
+                <div class="card" style="border-left-color: #319795;">
+                    <div class="word-header"><span class="kelime">Jest</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">El-kol hareketi veya yapılan incelikli davranış.</div>
+                </div>
+                <div class="card" style="border-left-color: #319795;">
+                    <div class="word-header"><span class="kelime">Kapasite</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">İçine alma gücü, yetenek miktarı.</div>
+                </div>
+                <div class="card" style="border-left-color: #319795;">
+                    <div class="word-header"><span class="kelime">Karakter</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Kişilik, ayırt edici yapı.</div>
+                </div>
+                <div class="card" style="border-left-color: #319795;">
+                    <div class="word-header"><span class="kelime">Katalog</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Ürün veya eserlerin listelendiği tanıtım kitapçığı.</div>
+                </div>
+                <div class="card" style="border-left-color: #319795;">
+                    <div class="word-header"><span class="kelime">Kondisyon</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Dayanıklılık, beden gücü veya çalışma şartı.</div>
+                </div>
+                <div class="card" style="border-left-color: #319795;">
+                    <div class="word-header"><span class="kelime">Kriter</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Ölçüt, değerlendirme standardı.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- L - P GRUBU -->
+        <div class="group-lp">
+            <div class="category-title">L – P Grubu</div>
+            <div class="grid">
+                <div class="card" style="border-left-color: #3182ce;">
+                    <div class="word-header"><span class="kelime">Lider</span><span class="koken">İngilizce</span></div>
+                    <div class="anlam">Önder, yönetici.</div>
+                </div>
+                <div class="card" style="border-left-color: #3182ce;">
+                    <div class="word-header"><span class="kelime">Lojistik</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Taşıma, depolama ve dağıtım hizmetleri.</div>
+                </div>
+                <div class="card" style="border-left-color: #3182ce;">
+                    <div class="word-header"><span class="kelime">Marka</span><span class="koken">İtalyanca</span></div>
+                    <div class="anlam">Bir işletmeyi veya ürünü tanıtan özel isim veya simge.</div>
+                </div>
+                <div class="card" style="border-left-color: #3182ce;">
+                    <div class="word-header"><span class="kelime">Masa</span><span class="koken">İtalyanca</span></div>
+                    <div class="anlam">Üzerinde iş yapılan, yemek yenilen mobilya.</div>
+                </div>
+                <div class="card" style="border-left-color: #3182ce;">
+                    <div class="word-header"><span class="kelime">Melodi</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Kulağa hoş gelen düzenli ses dizisi, ezgi.</div>
+                </div>
+                <div class="card" style="border-left-color: #3182ce;">
+                    <div class="word-header"><span class="kelime">Misyon</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Üstlenilen özel görev veya amaç.</div>
+                </div>
+                <div class="card" style="border-left-color: #3182ce;">
+                    <div class="word-header"><span class="kelime">Organize</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Düzenlenmiş, planlı, koordineli.</div>
+                </div>
+                <div class="card" style="border-left-color: #3182ce;">
+                    <div class="word-header"><span class="kelime">Pastel</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Yumuşak, açık ve mat renk tonu.</div>
+                </div>
+                <div class="card" style="border-left-color: #3182ce;">
+                    <div class="word-header"><span class="kelime">Pazarlama</span><span class="koken">İtalyanca/Türkçe</span></div>
+                    <div class="anlam">Ürün ve hizmetlerin satışa sunulması süreci.</div>
+                </div>
+                <div class="card" style="border-left-color: #3182ce;">
+                    <div class="word-header"><span class="kelime">Performans</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Başarım, sergilenen güç ve verim.</div>
+                </div>
+                <div class="card" style="border-left-color: #3182ce;">
+                    <div class="word-header"><span class="kelime">Prestij</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Saygınlık, itibar.</div>
+                </div>
+                <div class="card" style="border-left-color: #3182ce;">
+                    <div class="word-header"><span class="kelime">Proje</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Tasarlanan ve planlanan çalışma tasarısı.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- R - Z GRUBU -->
+        <div class="group-rz">
+            <div class="category-title">R – Z Grubu</div>
+            <div class="grid">
+                <div class="card" style="border-left-color: #805ad5;">
+                    <div class="word-header"><span class="kelime">Revize</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Gözden geçirilmiş, güncellenmiş.</div>
+                </div>
+                <div class="card" style="border-left-color: #805ad5;">
+                    <div class="word-header"><span class="kelime">Ritim</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Tempolu vuruş, düzenli tekrarlanış.</div>
+                </div>
+                <div class="card" style="border-left-color: #805ad5;">
+                    <div class="word-header"><span class="kelime">Sektör</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">İş kolu, faaliyet alanı.</div>
+                </div>
+                <div class="card" style="border-left-color: #805ad5;">
+                    <div class="word-header"><span class="kelime">Sempatik</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Cana yakın, sıcakkanlı.</div>
+                </div>
+                <div class="card" style="border-left-color: #805ad5;">
+                    <div class="word-header"><span class="kelime">Spontane</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Kendiliğinden olan, anlık gelişen.</div>
+                </div>
+                <div class="card" style="border-left-color: #805ad5;">
+                    <div class="word-header"><span class="kelime">Start</span><span class="koken">İngilizce</span></div>
+                    <div class="anlam">Başlangıç, çıkış noktası.</div>
+                </div>
+                <div class="card" style="border-left-color: #805ad5;">
+                    <div class="word-header"><span class="kelime">Strateji</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Önceden belirlenen izlem, eylem planı.</div>
+                </div>
+                <div class="card" style="border-left-color: #805ad5;">
+                    <div class="word-header"><span class="kelime">Şehir</span><span class="koken">Farsça</span></div>
+                    <div class="anlam">Büyük yerleşim yeri, kent.</div>
+                </div>
+                <div class="card" style="border-left-color: #805ad5;">
+                    <div class="word-header"><span class="kelime">Tiyatro</span><span class="koken">İtalyanca</span></div>
+                    <div class="anlam">Sahne sanatı veya oynandığı bina.</div>
+                </div>
+                <div class="card" style="border-left-color: #805ad5;">
+                    <div class="word-header"><span class="kelime">Trend</span><span class="koken">İngilizce</span></div>
+                    <div class="anlam">Eğilim, akım, yaygın moda.</div>
+                </div>
+                <div class="card" style="border-left-color: #805ad5;">
+                    <div class="word-header"><span class="kelime">Tuval</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Yağlı boya resim yapılan kasnağa gerili bez.</div>
+                </div>
+                <div class="card" style="border-left-color: #805ad5;">
+                    <div class="word-header"><span class="kelime">Vizyon</span><span class="koken">Fransızca</span></div>
+                    <div class="anlam">Geleceği görme yeteneği, ileri görüşlülük.</div>
+                </div>
+                <div class="card" style="border-left-color: #805ad5;">
+                    <div class="word-header"><span class="kelime">Zaman</span><span class="koken">Arapça</span></div>
+                    <div class="anlam">Vakit, süre, çağ.</div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>🚀 Bu sayfa tasarımı ve QR sistemi tamamen senin için hazırlandı!</p>
+        </footer>
+    </div>
+
+</body>
+</html>
